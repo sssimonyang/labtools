@@ -1,0 +1,32 @@
+[PBS_config]
+file_directory = <file_directory>
+# file_directory, by default current working directory
+# script_file and all variable_file must under file_directory, the the output will write to file_directory
+script_file = <script_file_name>
+queue_name = <queue_name>
+node = 1
+ppn = 10
+multiple = true
+# multiple determine the mode
+# if true it will use multiple section and generate multiple pbs
+# if false it will use single section and generate one pbs
+# default true
+
+[multiple]
+time = <hours of time>
+variable1 = <variable1>
+variable1_file = <variable1_file>
+# variable2 = <variable2>
+# variable2_file = <variable2_file>
+# variable3
+# variable3_file
+# ...
+# ...
+# pbs_directory_name = <queue_name> 
+# pbs_directory_name, by default {script_file_name}_pbs
+
+[single]
+time = <hours of time>
+task_name = <task_name>
+# pbs_directory_name = <queue_name> 
+# pbs_directory_name, by default pbs

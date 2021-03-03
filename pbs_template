@@ -1,0 +1,17 @@
+#!/bin/sh
+#PBS -N {task_name}
+#PBS -l nodes={node}:ppn={ppn}
+#PBS -l walltime={task_time}:00:00
+#PBS -S /bin/bash
+#PBS -q {queue_name}
+#PBS -o {out}
+#PBS -e {error}
+start='------------START------------'$(date "+%Y %h %d %H:%M:%S")'------------START------------'
+echo $start
+echo $start >&2
+
+{command}
+
+end='-------------END-------------'$(date "+%Y %h %d %H:%M:%S")'-------------END-------------'
+echo $end
+echo $end >&2
