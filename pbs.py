@@ -35,7 +35,11 @@ class PBS():
             self.command = f.readlines()
         self.command = [i.strip() for i in self.command]
         self.command = os.linesep.join(self.command) + os.linesep
+        
         # self.command = re.sub(r'^\%.*?\n', '', self.command)
+
+        if not 'set -euxo pipefail\n' in self.command:
+            self.command = 'set -euxo pipefail\n' + self.command
 
         env = re.search(r'env=(\w+?)\n', self.command)
         if env:
@@ -45,8 +49,6 @@ class PBS():
             if not f'source {path_to_conda}/activate {env_name}\n' in self.command:
                 self.command = f'source {path_to_conda}/activate {env_name}\n' + \
                     self.command + f'source {path_to_conda}/deactivate\n'
-        if not 'set -euxo pipefail\n' in self.command:
-            self.command = 'set -euxo pipefail\n' + self.command
 
         with open(self.command_file, 'w', encoding='utf-8') as f:
             f.write(self.command)
