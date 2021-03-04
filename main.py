@@ -6,14 +6,16 @@ import configparser
 
 
 def main(pbs_config, pbs_template):
-    assert os.path.exists(pbs_template) , "cann't find pbs_template, make sure it is under the same directory of main.py"
+    assert os.path.exists(
+        pbs_template), "cann't find pbs_template, make sure it is under the same directory of main.py"
     assert os.path.exists(pbs_config), f"{pbs_config} doesn't exists"
 
     pbs_template = os.path.abspath(pbs_template)
     cf = configparser.ConfigParser()
     cf.read(pbs_config)
     config = dict(cf.items("PBS_config"))
-    assert not any([bool(re.search('<.*>',i)) for i in config.values()]), 'config file <data> must be filled'
+    assert not any([bool(re.search('<.*>', i))
+                    for i in config.values()]), 'config file <data> must be filled'
     file_directory = config.get('file_directory')
     if file_directory and os.path.isdir(file_directory):
         os.chdir(file_directory)
@@ -33,7 +35,8 @@ def main(pbs_config, pbs_template):
 
 
 def multiple(pbs, config):
-    assert not any([bool(re.search('<.*>',i)) for i in config.values()]), 'config file <data> must be filled'
+    assert not any([bool(re.search('<.*>', i))
+                    for i in config.values()]), 'config file <data> must be filled'
     task_config = {}
     for i in config:
         result = re.match('variable(\d+)', i)
@@ -43,18 +46,20 @@ def multiple(pbs, config):
             task_config[config[f'variable{number}']
                         ] = config[f'variable{number}_file']
     assert task_config, 'at least one variable specified'
-        
+
     time = config.get('time')
     pbs_directory_name = config.get('pbs_directory_name')
     pbs.generate(task_config, time, pbs_directory_name)
 
 
 def single(pbs, config):
-    assert not any([bool(re.search('<.*>',i)) for i in config.values()]), 'config file <data> must be filled'
+    assert not any([bool(re.search('<.*>', i))
+                    for i in config.values()]), 'config file <data> must be filled'
     task_name = config.get('task_name')
     time = config.get('time')
     pbs_directory_name = config.get('pbs_directory_name')
     pbs.generate_one(task_name, time, pbs_directory_name)
+
 
 if __name__ == "__main__":
     import sys
@@ -62,4 +67,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('ini', type=str, help='config file')
     args = parser.parse_args()
-    main(args.ini,pbs_template)
+    main(args.ini, pbs_template)

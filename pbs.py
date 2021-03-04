@@ -35,7 +35,7 @@ class PBS():
             self.command = f.readlines()
         self.command = [i.strip() for i in self.command]
         self.command = os.linesep.join(self.command) + os.linesep
-        
+
         # self.command = re.sub(r'^\%.*?\n', '', self.command)
 
         if not 'set -euxo pipefail\n' in self.command:
@@ -98,12 +98,13 @@ class PBS():
             with open(_task.pbs, 'w', encoding='utf-8') as f:
                 f.write(template)
 
-    def generate_one(self, task, single_task_time,pbs_directory_name=None):
+    def generate_one(self, task, single_task_time, pbs_directory_name=None):
         if not pbs_directory_name:
             self.pbs_directory_name = 'pbs'
         else:
             self.pbs_directory_name = pbs_directory_name
-        sp.run(f'mkdir -p {self.working_directory}/{self.pbs_directory_name}/', shell=True)
+        sp.run(
+            f'mkdir -p {self.working_directory}/{self.pbs_directory_name}/', shell=True)
         task_files = [f'{self.working_directory}/{self.pbs_directory_name}/{task}' +
                       i for i in ['.pbs', '.out', '.error']]
         _task = PBS.Task(*task_files)
@@ -136,9 +137,9 @@ class PBS():
 
         running_tasks = self.get_running_tasks()
         for task in self.store_tasks:
-            if self.check_task_done(task) and task not in running_tasks:
-                _task = self.get(task)
-                result = sp.run(f'qsub {_task.pbs}', shell=True)
+            if （not self.check_task_done(task)) and (task not in running_tasks):
+                _task=self.get(task)
+                result=sp.run(f'qsub {_task.pbs}', shell = True)
                 if result.returncode == 0:
                     print(f"re qsub success: {task}")
                 else:
@@ -150,27 +151,27 @@ class PBS():
             print('should run generate function first.')
             return
 
-        _task = self.get(task)
-        sp.run(f'rm {_task.out} {_task.error}', shell=True)
-        result = sp.run(f'qsub {_task.pbs}', shell=True)
+        _task=self.get(task)
+        sp.run(f'rm {_task.out} {_task.error}', shell = True)
+        result=sp.run(f'qsub {_task.pbs}', shell = True)
         if result.returncode == 0:
             print(f"qsub success: {task}")
         else:
             print(f"qsub error: {task}")
 
     def get_running_tasks(self):
-        tasks = []
+        tasks=[]
         import re
-        result = sp.run(f'qstat', shell=True, capture_output=True)
-        result = result.stdout.decode().split('\n')[2:-1]
+        result=sp.run(f'qstat', shell = True, capture_output = True)
+        result=result.stdout.decode().split('\n')[2:-1]
         for i in result:
-            task = re.match(
+            task=re.match(
                 r'(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*', i).group(2)
             tasks.append(task)
         return tasks
 
     def clear_tasks(self):
-        self.store_tasks = {}
+        self.store_tasks={}
 
     def check_tasks_done(self):
         if all([self.check_task_done(task) for task in self.store_tasks]):
@@ -181,10 +182,10 @@ class PBS():
         return self.store_tasks.get(task)
 
     def check_task_done(self, task):
-        _task = self.get(task)
+        _task=self.get(task)
         if os.path.exists(_task.out):
             with open(_task.out) as f:
-                lines = f.readlines()
+                lines=f.readlines()
             if len([line for line in lines if line.startswith('---')]) == 2:
                 return True
         else:
