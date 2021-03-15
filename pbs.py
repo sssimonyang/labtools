@@ -38,10 +38,11 @@ class PBS():
 
         # self.command = re.sub(r'^\%.*?\n', '', self.command)
 
+        env = re.search(r'env=(\w+?)\n', self.command)
+
         if not 'set -euxo pipefail\n' in self.command:
             self.command = 'set -euxo pipefail\n' + self.command
 
-        env = re.search(r'env=(\w+?)\n', self.command)
         if env:
             env_name = env.group(1)
             conda = sp.run(f'which conda', shell=True, capture_output=True)
@@ -53,7 +54,7 @@ class PBS():
         with open(self.command_file, 'w', encoding='utf-8') as f:
             f.write(self.command)
 
-        # self.command = re.sub(r'echo (.*?) ',r'\1', self.command)
+        # self.command = re.sub(r'echo (.*?) ',r'\1 ', self.command)
 
     def generate(self, task_config, single_task_time, pbs_directory_name=None):
         if not self.command_file:
@@ -116,62 +117,51 @@ class PBS():
         with open(_task.pbs, 'w', encoding='utf-8') as f:
             f.write(template)
 
-    def qsub_all(self):
+    def qsub_all(self, wait_time=30):
         if not self.store_tasks:
             print('should run generate function first.')
             return
 
-        for task in self.store_tasks.items():
-            _task = self.get(task)
-            result = sp.run(f'qsub {_task.pbs}', shell=True)
-            if result.returncode == 0:
-                print(f"qsub success: {task}")
-            else:
-                print(f"qsub error: {task}")
-            time.sleep(5)
+        for task in self.store_tasks:
+            self.qsub(task)
+            time.sleep(wait_time)
 
-    def re_qsub_all(self):
+    def re_qsub_all(self, wait_time=30):
         if not self.store_tasks:
             print('should run generate function first.')
             return
 
         running_tasks = self.get_running_tasks()
         for task in self.store_tasks:
-            if （not self.check_task_done(task)) and (task not in running_tasks):
-                _task=self.get(task)
-                result=sp.run(f'qsub {_task.pbs}', shell = True)
-                if result.returncode == 0:
-                    print(f"re qsub success: {task}")
-                else:
-                    print(f"re qsub error: {task}")
-                time.sleep(5)
+            if (not self.check_task_done(task)) and (task not in running_tasks):
+                self.qsub(task)
+                time.sleep(wait_time)
 
     def qsub(self, task):
         if not self.store_tasks:
             print('should run generate function first.')
             return
 
-        _task=self.get(task)
-        sp.run(f'rm {_task.out} {_task.error}', shell = True)
-        result=sp.run(f'qsub {_task.pbs}', shell = True)
+        _task = self.get(task)
+        sp.run(f'rm {_task.out} {_task.error}', shell=True)
+        result = sp.run(f'qsub {_task.pbs}', shell=True)
         if result.returncode == 0:
             print(f"qsub success: {task}")
         else:
             print(f"qsub error: {task}")
 
     def get_running_tasks(self):
-        tasks=[]
-        import re
-        result=sp.run(f'qstat', shell = True, capture_output = True)
-        result=result.stdout.decode().split('\n')[2:-1]
+        tasks = []
+        result = sp.run(f'qstat', shell=True, capture_output=True)
+        result = result.stdout.decode().split('\n')[2:-1]
         for i in result:
-            task=re.match(
+            task = re.match(
                 r'(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*', i).group(2)
             tasks.append(task)
         return tasks
 
     def clear_tasks(self):
-        self.store_tasks={}
+        self.store_tasks = {}
 
     def check_tasks_done(self):
         if all([self.check_task_done(task) for task in self.store_tasks]):
@@ -182,11 +172,11 @@ class PBS():
         return self.store_tasks.get(task)
 
     def check_task_done(self, task):
-        _task=self.get(task)
+        _task = self.get(task)
         if os.path.exists(_task.out):
             with open(_task.out) as f:
-                lines=f.readlines()
-            if len([line for line in lines if line.startswith('---')]) == 2:
+                lines = f.readlines()
+            if len([line for line in lines if line.startswith('---')]) >= 2:
                 return True
         else:
             return False
