@@ -94,15 +94,29 @@ PBS class in pbs can be used by import and have qsub and other task submit relat
 #PBS -q {queue_name}
 #PBS -o {out}
 #PBS -e {error}
-start='------------START------------'$(date "+%Y %h %d %H:%M:%S")'------------START------------'
+
+timer(){{
+    timer_start=$*
+    timer_end=`date "+%Y-%m-%d %H:%M:%S"`
+    duration=`echo $(($(date +%s -d "${{timer_end}}") - $(date +%s -d "${{timer_start}}"))) | awk '{{t=split("60 s 60 m 24 h 999 d",a);for(n=1;n<t;n+=2){{if($1==0)break;s=$1%a[n]a[n+1]s;$1=int($1/a[n])}}print s}}'`
+    echo "now is "${{timer_end}}
+    echo "time used "${{duration}}
+}}
+
+timer_start=`date "+%Y-%m-%d %H:%M:%S"`
+
+start='------------START------------'${{timer_start}}'------------START------------'
 echo $start
 echo $start >&2
 
 {command}
 
-end='-------------END-------------'$(date "+%Y %h %d %H:%M:%S")'-------------END-------------'
+timer_end=`date "+%Y-%m-%d %H:%M:%S"`
+end='-------------END-------------'${{timer_end}}'-------------END-------------'
 echo $end
 echo $end >&2
+timer ${{timer_start}}
+
 ```
 
 ## todo
