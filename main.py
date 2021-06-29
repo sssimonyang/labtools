@@ -6,24 +6,20 @@ import configparser
 
 
 def main(pbs_config, pbs_template):
-    assert os.path.exists(
-        pbs_template), "cann't find pbs_template, make sure it is under the same directory of main.py"
     assert os.path.exists(pbs_config), f"{pbs_config} doesn't exists"
-
     pbs_template = os.path.abspath(pbs_template)
     cf = configparser.ConfigParser()
     cf.read(pbs_config)
     config = dict(cf.items("PBS_config"))
-    assert not any([bool(re.search('<.*>', i))
-                    for i in config.values()]), 'config file <data> must be filled'
+    assert not any([bool(re.search('<.*>', i)) for i in config.values()
+                   ]), 'config file <data> must be filled'
     file_directory = config.get('file_directory')
     if file_directory and os.path.isdir(file_directory):
-        os.chdir(file_directory)
+        pass
     else:
-        raise Exception(f"directory {file_directory} doesn't exists")
-    pbs = PBS(directory=file_directory,
-              pbs_template=pbs_template, **config)
-    pbs.command(config['script_file'])
+        raise Exception(f"directory {file_directory} doesn't exist")
+    pbs = PBS(directory=file_directory, pbs_template=pbs_template, **config)
+    pbs.set_script(config['script_file'])
     if config['multiple'].lower() == 'true':
         multiple_config = dict(cf.items("multiple"))
         multiple(pbs, multiple_config)
@@ -31,20 +27,21 @@ def main(pbs_config, pbs_template):
         single_config = dict(cf.items("single"))
         single(pbs, single_config)
     else:
-        print('multiple item of pbs_config was set wrong, must be true or false')
+        print(
+            'multiple item of pbs_config was set wrong, must be true or false')
 
 
 def multiple(pbs, config):
-    assert not any([bool(re.search('<.*>', i))
-                    for i in config.values()]), 'config file <data> must be filled'
+    assert not any([bool(re.search('<.*>', i)) for i in config.values()
+                   ]), 'config file <data> must be filled'
     task_config = {}
     for i in config:
         result = re.match('variable(\d+)', i)
         if result:
             number = result.group(1)
             assert f'variable{number}_file' in config, 'variable{number} does\' have corresponding file'
-            task_config[config[f'variable{number}']
-                        ] = config[f'variable{number}_file']
+            task_config[
+                config[f'variable{number}']] = config[f'variable{number}_file']
     assert task_config, 'at least one variable specified'
 
     time = config.get('time')
@@ -53,8 +50,8 @@ def multiple(pbs, config):
 
 
 def single(pbs, config):
-    assert not any([bool(re.search('<.*>', i))
-                    for i in config.values()]), 'config file <data> must be filled'
+    assert not any([bool(re.search('<.*>', i)) for i in config.values()
+                   ]), 'config file <data> must be filled'
     task_name = config.get('task_name')
     time = config.get('time')
     pbs_directory_name = config.get('pbs_directory_name')
@@ -63,8 +60,13 @@ def single(pbs, config):
 
 if __name__ == "__main__":
     import sys
-    pbs_template = os.path.split(sys.argv[0])[0] + '/pbs_template'
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    pbs_template = os.path.join(os.path.split(sys.argv[0])[0],
+                                'pbs_template')  # same directory with main.py
+    assert os.path.exists(
+        pbs_template
+    ), "cann't find pbs_template, make sure it is under the same directory of main.py"
+
+    parser = argparse.ArgumentParser(description='Process parameters.')
     parser.add_argument('ini', type=str, help='config file')
     args = parser.parse_args()
     main(args.ini, pbs_template)

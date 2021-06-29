@@ -9,14 +9,13 @@ python main.py <pbs_config>
 
 ## pbs_config
 
-Config file is pbs_config.
+Config file is pbs_config.ini.
 ```
 [PBS_config]
-# file_directory = <file_directory>
-# file_directory, by default current working directory
-# script_file and all variable_file must under file_directory, the the output will write to file_directory
+file_directory = <file_directory>
 script_file = <script_file_name>
-queue_name = <queue_name>
+# script_file must under file_directory
+pbs_queue_name = <queue_name>
 node = 1
 ppn = 10
 multiple = true
@@ -27,34 +26,34 @@ multiple = true
 
 [multiple]
 time = <hours of time>
-variable1 = <variable1>
-variable1_file = <variable1_file>
-# variable2 = <variable2>
-# variable2_file = <variable2_file>
+variable1 = patient
+variable1_file = patients
+# variable2 = <variable1>
+# variable2_file = <variable1_file>
 # variable3
 # variable3_file
 # ...
 # ...
-# pbs_directory_name = <queue_name> 
-# pbs_directory_name, by default <script_file_name>_pbs
+# all variable_file must under file_directory specified in file_directory
+# pbs_directory_name = <directory_name> 
+# pbs_directory_name, by default {script_file_name}
 
 [single]
 time = <hours of time>
 task_name = <task_name>
-# pbs_directory_name = <queue_name> 
+# pbs_directory_name = <directory_name> 
 # pbs_directory_name, by default pbs
 ```
-Copy, fill all place enclosed by angle brackets, remove `#` to add more config.
+Copy, fill all place enclosed by angle brackets, remove `#` to add more config. One example is in exmaple directory.
 
-File_directory is by default current working directory, and script_file and all variable_file must be put under file_directory, then the generated file will be written to file_directory correctly.
+File_directory is by default the working directory, and script_file and all variable_file must be put under file_directory, then the generated file will be written to file_directory correctly.
 
 It have two modes, multiple (multiple = true) and single (multiple = false) and read the corresponding section.
 
 ## feature
-1. It will automaticly detect env. If `env=<env_name>` was found in given script file, it will add `source <path_to_conda>/activate <env_name>` in head and `source <path_to_conda>/deactivate` in tail.
-2. It will add `set -euxo pipefail` in the head of given script file to avoid continuing running after error.
-3. The two change metioned above will modify raw script file directly.
-3. The pbs_template output start line and end line with time to help calculate the used time of script.
+1. It will automaticly detect env. If `env=<env_name>` was found in given script file, it will add `source <path_to_conda>/nconda activate <env_name>` in head and `conda deactivate` in tail.
+2. It will add `set -euxo pipefail` in the head and `set +euxo pipefail` in the tail to given script file, avoiding continuing running after error.
+3. The pbs_template output time in start and end and calculate the runtime.
 
 
 ## mode
@@ -74,15 +73,15 @@ A_patient
 B_patient
 C_patient
 ```
-And make sure there is an line `patient=<some_patient>` in given script file. It will replace `<some_patient>` as given variable1_file.
+And make sure there is an line `patient=<some_patient>` in given script file. It will replace `<some_patient>` as given value from variable1_file.
 
 This type of variable can have one or more, if more than one, make sure the num of values consistent.
 
 ### single
-Single mode is just a simplst version if multiple.
+Single mode is just a simplst version of multiple.
 
 ## Other hint
-PBS class in pbs can be used by import and have qsub and other task submit related function.
+PBS class in pbs can be used by import and it has qsub and other task related function.
 
 ## pbs_template
 ```
@@ -99,7 +98,6 @@ timer(){{
     timer_start=$*
     timer_end=`date "+%Y-%m-%d %H:%M:%S"`
     duration=`echo $(($(date +%s -d "${{timer_end}}") - $(date +%s -d "${{timer_start}}"))) | awk '{{t=split("60 s 60 m 24 h 999 d",a);for(n=1;n<t;n+=2){{if($1==0)break;s=$1%a[n]a[n+1]s;$1=int($1/a[n])}}print s}}'`
-    echo "now is "${{timer_end}}
     echo "time used "${{duration}}
 }}
 
@@ -116,7 +114,21 @@ end='-------------END-------------'${{timer_end}}'-------------END-------------'
 echo $end
 echo $end >&2
 timer ${{timer_start}}
+timer ${{timer_start}} >&2
 
+```
+
+## example
+
+One example is in example directory.
+
+```
+$ python main.py example/example.ini
+TCGA-DD-A113 generated
+TCGA-DD-A115 generated
+TCGA-DD-A116 generated
+TCGA-DD-A119 generated
+TCGA-DD-A11A generated
 ```
 
 ## todo

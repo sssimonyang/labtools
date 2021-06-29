@@ -1,0 +1,39 @@
+#!/bin/sh
+#PBS -N TCGA-DD-A115
+#PBS -l nodes=1:ppn=10
+#PBS -l walltime=10:00:00
+#PBS -S /bin/bash
+#PBS -q slst_zhangly
+#PBS -o /public/home/yangjk/code/0-package/1-labtools/example/pbs/TCGA-DD-A115.out
+#PBS -e /public/home/yangjk/code/0-package/1-labtools/example/pbs/TCGA-DD-A115.error
+
+timer(){
+    timer_start=$*
+    timer_end=`date "+%Y-%m-%d %H:%M:%S"`
+    duration=`echo $(($(date +%s -d "${timer_end}") - $(date +%s -d "${timer_start}"))) | awk '{t=split("60 s 60 m 24 h 999 d",a);for(n=1;n<t;n+=2){if($1==0)break;s=$1%a[n]a[n+1]s;$1=int($1/a[n])}print s}'`
+    echo "time used "${duration}
+}
+
+timer_start=`date "+%Y-%m-%d %H:%M:%S"`
+
+start='------------START------------'${timer_start}'------------START------------'
+echo $start
+echo $start >&2
+
+source /public/home/yangjk/software/miniconda3/etc/profile.d/conda.sh
+conda activate gatk
+set -euxo pipefail
+env=gatk
+patient=TCGA-DD-A115
+
+echo ${patient}
+set +euxo pipefail
+conda deactivate
+
+
+timer_end=`date "+%Y-%m-%d %H:%M:%S"`
+end='-------------END-------------'${timer_end}'-------------END-------------'
+echo $end
+echo $end >&2
+timer ${timer_start}
+timer ${timer_start} >&2
